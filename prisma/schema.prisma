@@ -19,21 +19,19 @@ model Student {
 }
 
 model Class {
-  id        Int       @id @default(autoincrement())
-  name      String
-  students  Student[]
-  faculty   Faculty   @relation(fields: [facultyId], references: [id])
-  facultyId Int
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  students Student[]
+  faculties Faculty[] @relation("FacultyClasses")
 }
 
 model Faculty {
-  id                  Int                  @id @default(autoincrement())
-  name                String
-  email               String
-  classes             Class[] // one-to-many
-  condonationRequests CondonationRequest[] // one-to-many
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  classes   Class[]   @relation("FacultyClasses")
+  condonationRequests CondonationRequest[]
 }
-
 model Event {
   id                  Int                  @id @default(autoincrement())
   name                String
@@ -65,3 +63,10 @@ model CondonationRequest {
   event     Event?   @relation(fields: [eventId], references: [id])
   eventId   Int?
 }
+
+model Admin {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String @unique
+}
+

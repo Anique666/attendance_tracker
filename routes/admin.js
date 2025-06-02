@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+const adminController = require('../controllers/adminController'); 
 
-// Post a new event
-router.post('/event', adminController.createEvent);
+// Route to upload a new event
+router.post('/events', adminController.createEvent);
 
-// Get registered students for an event
-router.get('/event/:eventId/registrations', adminController.getRegisteredStudents);
+// Route to get students registered for a specific event
+router.get('/events/:eventId/students', adminController.getRegisteredStudents);
 
-// Validate attendance for an event
-router.post('/event/validate-attendance', adminController.validateAttendance);
+// Route to validate attendance for a student at an event
+router.post('/attendance/validate', adminController.validateEventAttendance);
 
 module.exports = router;

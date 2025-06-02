@@ -25,7 +25,8 @@ app.get('/', async (req, res) => {
 const studentRoutes = require('./routes/student');
 const facultyRoutes = require('./routes/faculty');
 const adminRoutes = require('./routes/admin');
-
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
 app.use('/student', studentRoutes);
 app.use('/faculty', facultyRoutes);
 app.use('/admin', adminRoutes);

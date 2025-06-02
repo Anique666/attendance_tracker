@@ -2,13 +2,8 @@ const express = require('express');
 const router = express.Router();
 const facultyController = require('../controllers/facultyController');
 
-// Get list of students for a class
-router.get('/class/:classId/students', facultyController.getStudentsForClass);
-
-// Approve a medical condonation request
-router.post('/condonation/approve', facultyController.approveCondonation);
-
-// Mark class attendance
-router.post('/attendance/mark', facultyController.markAttendance);
+router.get('/:id/students', facultyController.getStudentsByFaculty);
+router.post('/attendance', facultyController.giveAttendance);
+router.post('/condonation/:requestId/approve', facultyController.approveCondonation);
 
 module.exports = router;
