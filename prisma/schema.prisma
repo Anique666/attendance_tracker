@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id                  Int                  @id @default(autoincrement())
+  usn                 String               @unique
+  name                String
+  email               String
+  classId             Int
+  condonationRequests CondonationRequest[]
+  attendances         Attendance[]
+  class               Class                @relation(fields: [classId], references: [id])
+}
+
+model Class {
+  id        Int       @id @default(autoincrement())
+  name      String
+  students  Student[]
+  faculty   Faculty   @relation(fields: [facultyId], references: [id])
+  facultyId Int
+}
+
+model Faculty {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  email               String
+  classes             Class[] // one-to-many
+  condonationRequests CondonationRequest[] // one-to-many
+}
+
+model Event {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  date                DateTime
+  createdByAdmin      Boolean
+  attendance          Attendance[]
+  condonationRequests CondonationRequest[]
+}
+
+model Attendance {
+  id        Int     @id @default(autoincrement())
+  studentId Int
+  eventId   Int?
+  reason    String? // Optional: e.g., 'Medical', 'Event'
+  status    String // e.g., "Present", "Condoned"
+  student   Student @relation(fields: [studentId], references: [id])
+  event     Event?  @relation(fields: [eventId], references: [id])
+}
+
+model CondonationRequest {
+  id        Int      @id @default(autoincrement())
+  reason    String
+  mediaUrl  String
+  status    String
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId Int
+  faculty   Faculty? @relation(fields: [facultyId], references: [id])
+  facultyId Int?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  eventId   Int?
+}
