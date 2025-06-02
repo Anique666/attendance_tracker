@@ -11,7 +11,8 @@ model Student {
   id                  Int                  @id @default(autoincrement())
   usn                 String               @unique
   name                String
-  email               String
+  email               String               @unique
+  password            String
   classId             Int
   condonationRequests CondonationRequest[]
   attendances         Attendance[]
@@ -25,11 +26,13 @@ model Class {
   faculties Faculty[] @relation("FacultyClasses")
 }
 
+
 model Faculty {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  classes   Class[]   @relation("FacultyClasses")
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  email               String               @unique
+  password            String
+  classes             Class[]              @relation("FacultyClasses")
   condonationRequests CondonationRequest[]
 }
 model Event {
@@ -65,8 +68,8 @@ model CondonationRequest {
 }
 
 model Admin {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
 }
-
