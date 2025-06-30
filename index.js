@@ -1,7 +1,11 @@
 const express = require('express');
+
 const { Pool } = require('pg');
 
 const app = express();
+
+
+
 app.use(express.json());
 
 const pool = new Pool({
@@ -15,7 +19,7 @@ const pool = new Pool({
 app.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
-    res.json({ time: result.rows[0].now });
+    res.json({ message: 'Welcome to the Attendance Tracker API', time: result.rows[0].now });
   } catch (err) {
     console.error(err);
     res.status(500).send('Database error');

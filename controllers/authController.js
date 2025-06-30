@@ -1,13 +1,31 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+// Get available classes
+exports.getClasses = async (req, res) => {
+  try {
+    const classes = await prisma.class.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    res.json(classes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch classes' });
+  }
+};
 
 // Register Student
 exports.registerStudent = async (req, res) => {
-  const { usn, name, email, password, classId } = req.body;
+  const { name, email, password, usn, classId } = req.body;
 
-  if (!classId || !password)
-    return res.status(400).json({ error: 'classId and password are required' });
+  if (!name || !email || !password || !usn || !classId) {
+    return res.status(400).json({ error: 'Name, email, password, USN, and class are required' });
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -18,13 +36,15 @@ exports.registerStudent = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        class: { connect: { id: classId } },
+        classId: parseInt(classId),
       },
     });
-    res.json({ message: 'Student registered successfully.', student });
+
+    const { password: _, ...studentWithoutPassword } = student;
+    res.json({ message: 'Student registered successfully', user: studentWithoutPassword });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to register student.' });
+    res.status(500).json({ error: 'Failed to register student' });
   }
 };
 
@@ -32,8 +52,9 @@ exports.registerStudent = async (req, res) => {
 exports.registerFaculty = async (req, res) => {
   const { name, email, password, classIds } = req.body;
 
-  if (!password || !Array.isArray(classIds) || classIds.length === 0)
-    return res.status(400).json({ error: 'Password and classIds are required' });
+  if (!name || !email || !password || !classIds || !classIds.length) {
+    return res.status(400).json({ error: 'Name, email, password, and at least one class are required' });
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,13 +64,20 @@ exports.registerFaculty = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        classes: { connect: classIds.map(id => ({ id })) },
+        classes: {
+          connect: classIds.map(id => ({ id: parseInt(id) })),
+        },
+      },
+      include: {
+        classes: true,
       },
     });
-    res.json({ message: 'Faculty registered successfully.', faculty });
+
+    const { password: _, ...facultyWithoutPassword } = faculty;
+    res.json({ message: 'Faculty registered successfully', user: facultyWithoutPassword });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to register faculty.' });
+    res.status(500).json({ error: 'Failed to register faculty' });
   }
 };
 
@@ -57,18 +85,26 @@ exports.registerFaculty = async (req, res) => {
 exports.registerAdmin = async (req, res) => {
   const { name, email, password } = req.body;
 
-  if (!password) return res.status(400).json({ error: 'Password required' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Name, email, and password are required' });
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const admin = await prisma.admin.create({
-      data: { name, email, password: hashedPassword },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
     });
-    res.json({ message: 'Admin registered successfully.', admin });
+
+    const { password: _, ...adminWithoutPassword } = admin;
+    res.json({ message: 'Admin registered successfully', user: adminWithoutPassword });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to register admin.' });
+    res.status(500).json({ error: 'Failed to register admin' });
   }
 };
 
@@ -85,9 +121,15 @@ exports.login = async (req, res) => {
   try {
     let user;
     if (role === 'student')
-      user = await prisma.student.findUnique({ where: { email } });
+      user = await prisma.student.findUnique({ 
+        where: { email },
+        include: { class: true }
+      });
     else if (role === 'faculty')
-      user = await prisma.faculty.findUnique({ where: { email } });
+      user = await prisma.faculty.findUnique({ 
+        where: { email },
+        include: { classes: true }
+      });
     else
       user = await prisma.admin.findUnique({ where: { email } });
 
@@ -96,10 +138,25 @@ exports.login = async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        role: role 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
     // Return user info except password
     const { password: _, ...userWithoutPassword } = user;
 
-    res.json({ message: `${role} logged in successfully`, user: userWithoutPassword });
+    res.json({ 
+      message: `${role} logged in successfully`, 
+      user: { ...userWithoutPassword, role },
+      token 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
