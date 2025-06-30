@@ -1,5 +1,6 @@
-Authorization Endpoints
+The Endpoints for the various routes used in the project are listed below :
 
+Authorization Endpoints
 | Method | Endpoint            | Description                     |
 | ------ | ------------------- | ------------------------------- |
 | `GET`  | `/classes`          | Get list of all classes         |
